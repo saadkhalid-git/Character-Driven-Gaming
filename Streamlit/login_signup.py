@@ -1,14 +1,28 @@
 import streamlit as st
-import hashlib
+import requests
 
-user_db = {}
+# Define the FastAPI backend URL
+BACKEND_URL = "http://127.0.0.1:8000"
 
-def hash_password(password):
-    """Hash a password for secure storage."""
-    return hashlib.sha256(password.encode()).hexdigest()
+# Manage session state for login
+if "logged_in" not in st.session_state:
+    st.session_state.logged_in = False
+if "username" not in st.session_state:
+    st.session_state.username = ""
 
+# Function for the movies page
+def movies_page():
+    st.title("Movies Page")
+    st.write(f"Welcome to the Movies Page, {st.session_state.username}!")
+    st.button("Logout", on_click=logout)
+
+# Logout function
+def logout():
+    st.session_state.logged_in = False
+    st.session_state.username = ""
+
+# Login page
 def login_page():
-    """Display login and sign-up interface."""
     st.title("Login Page")
     menu = ["Login", "Sign Up"]
     choice = st.radio("Select an option", menu)
@@ -18,10 +32,18 @@ def login_page():
         username = st.text_input("Username")
         password = st.text_input("Password", type="password")
         if st.button("Login"):
-            if username in user_db and user_db[username] == hash_password(password):
-                st.success(f"Welcome back, {username}!")
+            if username and password:
+                response = requests.post(f"{BACKEND_URL}/login", json={"username": username, "password": password})
+                if response.status_code == 200:
+                    st.success(response.json()["message"])
+                    # Set session state
+                    st.session_state.logged_in = True
+                    st.session_state.username = username
+                    movies_page()
+                else:
+                    st.error(response.json()["detail"])
             else:
-                st.error("Invalid username or password. Please try again.")
+                st.warning("Please enter both username and password.")
 
     elif choice == "Sign Up":
         st.subheader("Create a New Account")
@@ -29,14 +51,21 @@ def login_page():
         new_password = st.text_input("Choose a Password", type="password")
         confirm_password = st.text_input("Confirm Password", type="password")
         if st.button("Sign Up"):
-            if new_password != confirm_password:
-                st.warning("Passwords do not match. Please try again.")
-            elif new_username in user_db:
-                st.warning("Username already exists. Please choose a different username.")
+            if new_username and new_password and confirm_password:
+                response = requests.post(f"{BACKEND_URL}/signup", 
+                                         json={"username": new_username, 
+                                               "password": new_password, 
+                                               "confirm_password": confirm_password})
+                if response.status_code == 200:
+                    st.success(response.json()["message"])
+                else:
+                    st.error(response.json()["detail"])
             else:
-                user_db[new_username] = hash_password(new_password)
-                st.success("Account created successfully! You can now log in.")
+                st.warning("Please fill in all fields.")
 
 # Main execution
 if __name__ == "__main__":
-    login_page()
+    if st.session_state.logged_in:
+        movies_page()  # Redirect to the movies page
+    else:
+        login_page()  # Show the login page

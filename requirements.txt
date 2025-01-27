@@ -28,3 +28,4 @@ transformers
 datasets
 torch
 torch-geometric
+requests
