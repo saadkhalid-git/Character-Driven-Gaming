@@ -27,3 +27,4 @@ pre-commit
 transformers
 datasets
 torch
+torch-geometric
