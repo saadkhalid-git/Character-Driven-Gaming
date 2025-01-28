@@ -28,6 +28,7 @@ def logout():
     st.session_state["authenticated"] = False
     st.session_state["username"] = None
     st.session_state["show_recommendation"] = False
+    st.rerun()  # Force Streamlit to rerun and show login page
 
 
 def login_page():
@@ -56,7 +57,7 @@ def movie_search_page():
     with top_placeholder.container():
         col1, col2 = st.columns([9, 1])  # Adjust the column widths
         with col2:
-            if st.button("Logout"):
+            if st.button("Logout", type="primary", use_container_width=True):
                 logout()
 
     # Display the main content
