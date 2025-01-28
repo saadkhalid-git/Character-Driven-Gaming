@@ -6,6 +6,7 @@ from psycopg2.extras import RealDictCursor
 from dotenv import load_dotenv
 import os
 import torch
+import uvicorn
 
 # Load environment variables
 load_dotenv()
@@ -13,7 +14,7 @@ DATABASE_URL = os.getenv("DATABASE_URL")
 
 app = FastAPI()
 
-model = torch.load('/Users/wasedoo/Documents/EPITA/Semester 3/Action Learning/cross-domain-recommender-movies-and-games/models/gnn/gnn-model.pt', weights_only = False)
+model = torch.load('../models/gnn/gnn-model.pt', weights_only = False)
 
 
 # Hashing function
@@ -73,4 +74,9 @@ def signup(new_user: NewUser):
 @app.post("/recommend")
 def recommend(data: dict):
     print(model)
+    # Placeholder for recommendation logic
+    # You can add your recommendation logic here using the loaded model
     return {"message": "Recommendations sent successfully!"}
+
+if __name__ == "__main__":
+    uvicorn.run(app, host="0.0.0.0", port=8000)
