@@ -15,6 +15,9 @@ if "username" not in st.session_state:
 movies_df = pd.read_csv("/Users/wasedoo/Documents/EPITA/Semester 3/Action Learning/cross-domain-recommender-movies-and-games/data/db-data/movies.csv")
 movies = movies_df['title'].tolist()
 
+games_df = pd.read_csv("/Users/wasedoo/Documents/EPITA/Semester 3/Action Learning/cross-domain-recommender-movies-and-games/data/db-data/games.csv")
+games = games_df['title'].tolist()
+
 # Function for the movies page
 def movies_page():
     st.title("Movies Page")
@@ -24,11 +27,21 @@ def movies_page():
             st.session_state.show_recommendation = True
 
         if st.session_state.get("show_recommendation", False):
-            games = ["Game 1", "Game 2", "Game 3"]
             selected_movies = st.multiselect("Choose Movies", movies, key="selected_movies")
             selected_games = st.multiselect("Choose Games", games, key="selected_games")
             if st.button("Submit"):
-                st.write(f"You selected movies: {', '.join(selected_movies)} and games: {', '.join(selected_games)}")
+                selected_movie_ids = movies_df[movies_df['title'].isin(selected_movies)]['movieId'].tolist()
+                selected_game_ids = games_df[games_df['title'].isin(selected_games)]['app_id'].tolist()
+                data = {
+                    "username": st.session_state.username,
+                    "selected_movie_ids": selected_movie_ids,
+                    "selected_game_ids": selected_game_ids
+                }
+                response = requests.post(f"{BACKEND_URL}/recommend", json=data)
+                if response.status_code == 200:
+                    st.success("Recommendations sent successfully!")
+                else:
+                    st.error("Failed to send recommendations.")
                 st.session_state.show_recommendation = False
 
         st.button("Logout", on_click=logout)

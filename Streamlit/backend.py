@@ -65,3 +65,7 @@ def signup(new_user: NewUser):
         conn.rollback()
         conn.close()
         raise HTTPException(status_code=400, detail="Username already exists")
+    
+@app.post("/recommend")
+def recommend(data: dict):
+    pass
