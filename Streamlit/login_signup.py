@@ -22,6 +22,8 @@ def login_page():
                         st.success(response.json()["message"])
                         st.session_state["authenticated"] = True
                         st.session_state["username"] = username
+                        st.session_state["page"] = "movie_search_page"
+                        st.rerun()
                     else:
                         st.error(response.json()["detail"])
                 except requests.exceptions.RequestException as e:
