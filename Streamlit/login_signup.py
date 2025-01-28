@@ -1,5 +1,6 @@
 import streamlit as st
 import requests
+import pandas as pd
 
 # Define the FastAPI backend URL
 BACKEND_URL = "http://127.0.0.1:8000"
@@ -10,11 +11,27 @@ if "logged_in" not in st.session_state:
 if "username" not in st.session_state:
     st.session_state.username = ""
 
+# Load movies from CSV
+movies_df = pd.read_csv("/Users/wasedoo/Documents/EPITA/Semester 3/Action Learning/cross-domain-recommender-movies-and-games/data/db-data/movies.csv")
+movies = movies_df['title'].tolist()
+
 # Function for the movies page
 def movies_page():
     st.title("Movies Page")
-    st.write(f"Welcome to the Movies Page, {st.session_state.username}!")
-    st.button("Logout", on_click=logout)
+    with st.sidebar:
+        st.write(f"Welcome to the Movies Page, {st.session_state.username}!")
+        if st.button("Recommend Me!"):
+            st.session_state.show_recommendation = True
+
+        if st.session_state.get("show_recommendation", False):
+            games = ["Game 1", "Game 2", "Game 3"]
+            selected_movies = st.multiselect("Choose Movies", movies, key="selected_movies")
+            selected_games = st.multiselect("Choose Games", games, key="selected_games")
+            if st.button("Submit"):
+                st.write(f"You selected movies: {', '.join(selected_movies)} and games: {', '.join(selected_games)}")
+                st.session_state.show_recommendation = False
+
+        st.button("Logout", on_click=logout)
 
 # Logout function
 def logout():
@@ -39,7 +56,7 @@ def login_page():
                     # Set session state
                     st.session_state.logged_in = True
                     st.session_state.username = username
-                    movies_page()
+                    st.rerun()
                 else:
                     st.error(response.json()["detail"])
             else:
