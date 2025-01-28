@@ -52,13 +52,10 @@ def movie_search_page():
         login_page()
         return
 
-    # Create a container at the very top for the logout button
+    # Create a container at the top right for the logout button
     top_placeholder = st.empty()
     with top_placeholder.container():
-        col1, col2 = st.columns([9, 1])  # Adjust the column widths
-        with col2:
-            if st.button("Logout", type="primary", use_container_width=True):
-                logout()
+        st.button("Logout", type="primary", key="logout_button", on_click=logout)
 
     # Display the main content
     st.title("Movie Search and Recommendations")
