@@ -36,13 +36,20 @@ def movie_search_page():
                 selected_movie_ids = movies_df[movies_df['title'].isin(selected_movies)]['movieId'].tolist()
                 selected_game_ids = games_df[games_df['title'].isin(selected_games)]['app_id'].tolist()
                 data = {
-                    "username": st.session_state.username,
-                    "selected_movie_ids": selected_movie_ids,
-                    "selected_game_ids": selected_game_ids
+                    "username": st.session_state.username,  
+                    "movies": selected_movie_ids,          
+                    "games": selected_game_ids             
                 }
                 response = requests.post(f"{BACKEND_URL}/recommend", json=data)
                 if response.status_code == 200:
-                    st.success("Recommendations sent successfully!")
+                    # Parse the API response
+                    recommended_items = response.json()
+
+                    # Display recommendations
+                    st.success("Here are your recommendations:")
+                    for i, item in enumerate(recommended_items, 1):
+                        st.write(f"**{i}. [{item['type']}] {item['title']}**")
+                        st.write(f"Predicted Rating: {item['predicted_rating']}")
                 else:
                     st.error("Failed to send recommendations.")
 
