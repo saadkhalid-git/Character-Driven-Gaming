@@ -56,6 +56,13 @@ def login_page():
             else:
                 st.warning("Please fill in all fields.")
 
+def logout():
+    """Logout function to reset session state."""
+    st.session_state["authenticated"] = False
+    st.session_state["username"] = None
+    st.experimental_rerun()
+
+
 # Allow standalone execution
 if __name__ == "__main__":
     if "authenticated" not in st.session_state:
