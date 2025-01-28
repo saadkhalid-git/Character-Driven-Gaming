@@ -3,15 +3,18 @@ import pandas as pd
 import requests
 
 # Mock data for movies and games
-movies_df = pd.read_csv("../data/db-data/movies.csv")
-movies = movies_df['title'].tolist()
-
+movies_df = pd.read_csv("../data/processed/processed_movies.csv")
 games_df = pd.read_csv("../data/db-data/games.csv")
+movies = movies_df['title'].tolist()
 games = games_df['title'].tolist()
 
-# FastAPI backend URL
-BACKEND_URL = "http://127.0.0.1:8000"  # Replace with your actual FastAPI URL
+if "posters" in movies_df.columns:
+    posters = movies_df['posters'].tolist()
+else:
+    posters = ["https://via.placeholder.com/150"] * len(movies_df)  
 
+# FastAPI backend URL
+BACKEND_URL = "http://127.0.0.1:8000"  
 
 def initialize_session_state():
     """Ensure all necessary session state variables are initialized."""
@@ -55,39 +58,27 @@ def movie_search_page():
     # Create a container at the top right for the logout button
     top_placeholder = st.empty()
     with top_placeholder.container():
-        st.button("Logout", type="primary", key="logout_button", on_click=logout)
+        # Assign a unique key to the Logout button
+        st.button("Logout", type="primary", key="unique_logout_button", on_click=logout)
 
     # Display the main content
     st.title("Movie Search and Recommendations")
     st.subheader(f"Welcome, {st.session_state['username']}!")
 
     query = st.text_input("Enter movie name:")
-    if st.button("Search"):
-        st.write("Search functionality coming soon!")
+    if st.button("Search", key="search_button"):
+        # Filter movies by search query and remove duplicates
+        filtered_movies = movies_df[movies_df['title'].str.contains(query, case=False, na=False)].drop_duplicates(subset=['title', 'posters'])
 
-    with st.sidebar:
-        st.write(f"Welcome to the Movies Page, {st.session_state['username']}!")
-        if st.button("Recommend Me!"):
-            st.session_state["show_recommendation"] = True
-
-        if st.session_state.get("show_recommendation", False):
-            selected_movies = st.multiselect("Choose Movies", movies, key="selected_movies")
-            selected_games = st.multiselect("Choose Games", games, key="selected_games")
-            if st.button("Submit"):
-                st.write(f"You selected movies: {', '.join(selected_movies)} and games: {', '.join(selected_games)}")
-                selected_movie_ids = movies_df[movies_df['title'].isin(selected_movies)]['movieId'].tolist()
-                selected_game_ids = games_df[games_df['title'].isin(selected_games)]['app_id'].tolist()
-                data = {
-                    "username": st.session_state["username"],
-                    "selected_movie_ids": selected_movie_ids,
-                    "selected_game_ids": selected_game_ids
-                }
-                response = requests.post(f"{BACKEND_URL}/recommend", json=data)
-                if response.status_code == 200:
-                    st.success("Recommendations sent successfully!")
-                else:
-                    st.error("Failed to send recommendations.")
-
+        # Display the filtered movies with posters in a 3-column layout
+        if not filtered_movies.empty:
+            cols = st.columns(3)  # Create 3 columns for each row
+            for idx, (_, movie) in enumerate(filtered_movies.iterrows()):
+                with cols[idx % 3]:  
+                    st.image(movie['posters'], width=150) 
+                    st.write(f"**{movie['title']}**")  
+        else:
+            st.write("No movies found!")
 
 # Main entry point
 if __name__ == "__main__":
