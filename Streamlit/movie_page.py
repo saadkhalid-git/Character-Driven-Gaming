@@ -1,6 +1,14 @@
 import streamlit as st
 import requests
 import pandas as pd
+import os
+import time
+from streamlit_autorefresh import st_autorefresh
+
+
+
+DEFAULT_GAME_IMAGE = '/Users/wasedoo/Documents/EPITA/Semester 3/Action Learning/cross-domain-recommender-movies-and-games/Streamlit/468-4685484_transparent-video-game-clipart-game-console-clipart-hd.png'
+DEFAULT_POSTER_URL = '/Users/wasedoo/Documents/EPITA/Semester 3/Action Learning/cross-domain-recommender-movies-and-games/Streamlit/1f3ac.png'
 
 movies_df = pd.read_csv("/Users/wasedoo/Documents/EPITA/Semester 3/Action Learning/cross-domain-recommender-movies-and-games/data/db-data/movies.csv")
 movies = movies_df['title'].tolist()
@@ -8,50 +16,149 @@ movies = movies_df['title'].tolist()
 games_df = pd.read_csv("/Users/wasedoo/Documents/EPITA/Semester 3/Action Learning/cross-domain-recommender-movies-and-games/data/db-data/games.csv")
 games = games_df['title'].tolist()
 
+processed_movies = pd.read_csv("/Users/wasedoo/Documents/EPITA/Semester 3/Action Learning/cross-domain-recommender-movies-and-games/data/processed/processed_movies.csv")
+
+movies_with_posters = movies_df.merge(processed_movies, on="title", how="left")
+
+movies_with_posters["posters"] = movies_with_posters["posters"].fillna(DEFAULT_POSTER_URL)
+movies_with_posters["posters"] = movies_with_posters["posters"].astype(str)
+
+movies_with_posters["posters"] = movies_with_posters["posters"].astype(str)
+
+GAME_POSTERS_FOLDER = "/Users/wasedoo/Documents/EPITA/Semester 3/Action Learning/cross-domain-recommender-movies-and-games/Streamlit/trending posters/"
+
+# Get top trending movies (most watched/rated)
+trending_movies = movies_df.groupby("title")["movieId"].count().sort_values(ascending=False).head(5).index.tolist()
+
+# Get top trending games (most played/rated)
+trending_games = games_df.groupby("title")["app_id"].count().sort_values(ascending=False).head(5).index.tolist()
+
 # FastAPI backend URL
-BACKEND_URL = "http://127.0.0.1:8000"  # Replace with the actual URL of your FastAPI backend
+BACKEND_URL = "http://127.0.0.1:8000"  
+
+def get_game_poster_paths():
+    """Retrieve all game poster image paths from the local folder."""
+    # if not os.path.exists(GAME_POSTERS_FOLDER):
+    #     return []
+
+    # print(os.listdir(GAME_POSTERS_FOLDER))
+    # Get all image files (JPEG, PNG, etc.)
+    return [os.path.join(GAME_POSTERS_FOLDER, f) for f in os.listdir(GAME_POSTERS_FOLDER) if f.endswith((".png", ".jpg", ".jpeg"))]
+
+def display_game_slideshow():
+    """Displays a continuously running slideshow of trending game posters without blocking UI."""
+    game_images = get_game_poster_paths()
+
+    if not game_images:
+        st.warning("No trending game posters found.")
+        return
+
+    # Auto-refresh only this section every 3 seconds
+    refresh_count = st_autorefresh(interval=3000, limit=None, key="game_slideshow")
+
+    # Select an image based on the refresh count
+    image_index = refresh_count % len(game_images)
+    st.image(game_images[image_index], use_column_width=True)
+
 
 def movie_search_page():
     """Movie search and recommendation interface."""
     if "username" not in st.session_state:
         st.session_state["username"] = "TestUser"  # Mock username for standalone testing
 
-    st.title("Movie Search and Recommendations")
+    if "recommended_items" not in st.session_state:
+        st.session_state["recommended_items"] = None  # Store recommendations
+
+    st.title("🎬 Movie & Game Recommendations")
     st.subheader(f"Welcome, {st.session_state['username']}!")
 
-    query = st.text_input("Enter movie name:")
-    if st.button("Search"):
-        st.write("Search functionality coming soon!")
+    # 🔥 Display Trending Recommendations First
+    st.subheader("🔥 Trending Recommendations")
 
-    with st.sidebar:
-        st.write(f"Welcome to the Movies Page, {st.session_state.username}!")
-        if st.button("Recommend Me!"):
-            st.session_state.show_recommendation = True
+    # 🎮 Display the Slideshow for Trending Game Posters
+    display_game_slideshow()
 
-        if st.session_state.get("show_recommendation", False):
-            selected_movies = st.multiselect("Choose Movies", movies, key="selected_movies")
-            selected_games = st.multiselect("Choose Games", games, key="selected_games")
-            if st.button("Submit"):
-                st.write(f"You selected movies: {', '.join(selected_movies)} and games: {', '.join(selected_games)}")
-                selected_movie_ids = movies_df[movies_df['title'].isin(selected_movies)]['movieId'].tolist()
-                selected_game_ids = games_df[games_df['title'].isin(selected_games)]['app_id'].tolist()
-                data = {
-                    "username": st.session_state.username,  
-                    "movies": selected_movie_ids,          
-                    "games": selected_game_ids             
-                }
-                response = requests.post(f"{BACKEND_URL}/recommend", json=data)
-                if response.status_code == 200:
-                    # Parse the API response
-                    recommended_items = response.json()
+    # 🎯 Movie & Game Selection
+    st.subheader("🎯 Choose Your Favorites")
+    
+    selected_movies = st.multiselect("Choose Movies", movies_df["title"].tolist(), key="selected_movies")
+    selected_games = st.multiselect("Choose Games", games_df["title"].tolist(), key="selected_games")
 
-                    # Display recommendations
-                    st.success("Here are your recommendations:")
-                    for i, item in enumerate(recommended_items, 1):
-                        st.write(f"**{i}. [{item['type']}] {item['title']}**")
-                        st.write(f"Predicted Rating: {item['predicted_rating']}")
-                else:
-                    st.error("Failed to send recommendations.")
+    movie_ratings = {}
+    game_ratings = {}
+
+    # Collect user ratings for selected movies
+    if selected_movies:
+        st.subheader("Rate Selected Movies")
+        for movie in selected_movies:
+            movie_ratings[movie] = st.slider(f"Rate {movie}", 0, 5, 3)
+
+    # Collect user ratings for selected games
+    if selected_games:
+        st.subheader("Rate Selected Games")
+        for game in selected_games:
+            game_ratings[game] = st.slider(f"Rate {game}", 0, 5, 3)
+
+    if st.button("Recommend me!"):
+        st.write(f"You selected movies: {', '.join(selected_movies)} and games: {', '.join(selected_games)}")
+
+        # Convert selections into a DataFrame lookup
+        selected_movie_data = movies_df[movies_df["title"].isin(selected_movies)]
+        selected_game_data = games_df[games_df["title"].isin(selected_games)]
+
+        # Prepare JSON payload
+        movies_data = [
+            {"id": row["movieId"], "title": row["title"], "rating": movie_ratings[row["title"]]}
+            for _, row in selected_movie_data.iterrows()
+        ]
+
+        games_data = [
+            {"id": row["app_id"], "title": row["title"], "rating": game_ratings[row["title"]]}
+            for _, row in selected_game_data.iterrows()
+        ]
+
+        data = {
+            "username": st.session_state["username"],
+            "movies": movies_data,
+            "games": games_data
+        }
+
+        response = requests.post(f"{BACKEND_URL}/recommend", json=data)
+
+        if response.status_code == 200:
+            st.session_state["recommended_items"] = response.json()  # Store recommendations
+        else:
+            st.error("Failed to send recommendations.")
+
+    # 🔄 Show Recommendations if Available
+    if st.session_state["recommended_items"]:
+        display_recommendations(st.session_state["recommended_items"])
+
+def display_recommendations(recommended_items):
+    st.success("Here are your recommendations:")
+
+    cols = st.columns(3)  # Grid layout
+
+    for idx, item in enumerate(recommended_items):
+        title = item["title"]
+        predicted_rating = item["predicted_rating"]
+        item_type = item["type"]  # Check if it's a Movie or a Game
+
+        if item_type == "Movie":
+            # Get movie poster
+            poster_url = movies_with_posters.loc[movies_with_posters["title"] == title, "posters"].values
+            image_url = poster_url[0] if len(poster_url) > 0 and isinstance(poster_url[0], str) else DEFAULT_POSTER_URL
+        else:
+            # Use default image for games
+            image_url = DEFAULT_GAME_IMAGE
+
+        with cols[idx % 3]:
+            st.image(image_url, use_column_width=True)  # Display image safely
+            st.markdown(f"**{title}**")
+            st.write(f"⭐ {predicted_rating}")
+
+
+
 
 # # Allow standalone execution
 # if __name__ == "__main__":

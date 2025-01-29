@@ -34,7 +34,6 @@ model.load_state_dict(torch.load('../models/gnn/best-model.pt', map_location=tor
 model.eval()
 
 
-# Load environment variables
 load_dotenv()
 DATABASE_URL = os.getenv("DATABASE_URL")
 
@@ -106,40 +105,75 @@ def signup(new_user: NewUser):
         conn.close()
         raise HTTPException(status_code=400, detail="Username already exists")
     
+
 @app.post("/recommend")
 def recommend(data: dict, top_k: int = 10):
+    # Load the saved graph data
+    graph_data = torch.load("../models/gnn/graph_data.pt")
+
+    node_features = graph_data.x  # Precomputed node features
+    edge_index = graph_data.edge_index  # Precomputed edge structure
+    edge_weight = graph_data.edge_attr  # Precomputed edge weights
 
     num_users = len(user_map)
     num_movies = len(movie_map)
     num_games = len(game_map)
-    num_nodes = num_users + num_movies + num_games
-    node_features = torch.zeros(num_nodes, model_args["num_features"])  # Correct shape
 
-    liked_movies = data.get('movies', [])
-    liked_games = data.get('games', [])
 
-    # Map the liked items to their internal IDs
-    liked_movie_edges = [[movie_map[movie_id], movie_map[movie_id]] for movie_id in liked_movies if movie_id in movie_map]
-    liked_game_edges = [[game_map[game_id], game_map[game_id]] for game_id in liked_games if game_id in game_map]
+    # Extract user ratings from request
+    liked_movies = data.get("movies", [])
+    liked_games = data.get("games", [])
 
-    # Get all movies and games
+    # Convert user ratings into a dictionary for easy lookup
+    movie_ratings = {m["id"]: m["rating"] for m in liked_movies}
+    game_ratings = {g["id"]: g["rating"] for g in liked_games}
+
+    # Dynamically add user edges based on given ratings
+    user_node = 0  # Assuming single-user inference
+
+    new_edges = []
+    new_edge_weights = []
+
+    # Add edges for movies with user ratings
+    for movie_id, rating in movie_ratings.items():
+        if movie_id in movie_map:
+            new_edges.append([user_node, movie_map[movie_id]])  # User → Movie edge
+            new_edge_weights.append(rating)  # Edge weight = User rating
+
+    # Add edges for games with user ratings
+    for game_id, rating in game_ratings.items():
+        if game_id in game_map:
+            new_edges.append([user_node, game_map[game_id]])  # User → Game edge
+            new_edge_weights.append(rating)  # Edge weight = User rating
+
+    # Convert new edges into tensors
+    if new_edges:
+        new_edge_index = torch.tensor(new_edges, dtype=torch.long).t().contiguous()
+        new_edge_weights = torch.tensor(new_edge_weights, dtype=torch.float)
+
+        # Append new user-item edges to existing edges
+        edge_index = torch.cat([edge_index, new_edge_index], dim=1)
+        edge_weight = torch.cat([edge_weight, new_edge_weights], dim=0)
+
+    # Find all items (movies & games) that the user hasn't rated yet
     all_movies = set(movie_map.keys())
     all_games = set(game_map.keys())
 
-    # Determine unwatched/unrated movies and games
-    unwatched_movies = all_movies - set(liked_movies)
-    unrated_games = all_games - set(liked_games)
+    unwatched_movies = all_movies - set(movie_ratings.keys())
+    unrated_games = all_games - set(game_ratings.keys())
 
-    # Create test edges for movies and games
-    test_movie_edges = [[movie_map[movie_id], movie_map[movie_id]] for movie_id in unwatched_movies]
-    test_game_edges = [[game_map[game_id], game_map[game_id]] for game_id in unrated_games]
+    # Generate test edges for prediction (User → Unwatched Movies & Unrated Games)
+    test_movie_edges = [[user_node, movie_map[movie_id]] for movie_id in unwatched_movies]
+    test_game_edges = [[user_node, game_map[game_id]] for game_id in unrated_games]
+
+    # Convert test edges to tensor
     test_edges = test_movie_edges + test_game_edges
     test_edge_index = torch.tensor(test_edges, dtype=torch.long).t().contiguous()
 
     with torch.no_grad():
-        test_data = Data(x=node_features, edge_index=test_edge_index)
+        test_data = Data(x=node_features, edge_index=test_edge_index, edge_weight=edge_weight)
         predictions = model(test_data)
-    
+
     predictions = predictions.squeeze()
 
     # Separate movie and game predictions
@@ -147,52 +181,43 @@ def recommend(data: dict, top_k: int = 10):
     movie_predictions = predictions[:num_movie_edges].tolist()
     game_predictions = predictions[num_movie_edges:].tolist()
 
-    # Combine movie and game predictions with their respective IDs
+    # Combine predicted scores with item IDs
     movie_recommendations = list(zip(unwatched_movies, movie_predictions))
     game_recommendations = list(zip(unrated_games, game_predictions))
 
-    # Sort by predicted rating and select the top movies and games
-    top_movie_recommendations = sorted(movie_recommendations, key=lambda x: x[1], reverse=True)[:top_k]
-    top_game_recommendations = sorted(game_recommendations, key=lambda x: x[1], reverse=True)[:top_k]
+    # Sort and get top-k recommendations
+    top_movie_recommendations = sorted(movie_recommendations, key=lambda x: x[1], reverse=True)[:top_k-5]
+    top_game_recommendations = sorted(game_recommendations, key=lambda x: x[1], reverse=True)[:top_k-5]
 
     recommended_items = []
+
     for item_id, pred_rating in top_movie_recommendations:
         item_id = int(item_id)
-        pred_rating = float(pred_rating)  # Ensure pred_rating is a Python float
+        pred_rating = float(pred_rating)
 
-        print(f"item_id: {item_id}, pred_rating: {pred_rating}, type(pred_rating): {type(pred_rating)}")
-
-        # Ensure pred_rating is a single float
-        pred_rating = float(pred_rating) if isinstance(pred_rating, (int, float)) else float(pred_rating[0])
         movie_info = movie_df[movie_df.movieId == item_id]
-        movie_title = movie_info['title'].iloc[0] if not movie_info.empty else f"Unknown Movie ({item_id})"
+        movie_title = movie_info["title"].iloc[0] if not movie_info.empty else f"Unknown Movie ({item_id})"
         recommended_items.append({
-            'type': 'Movie',
-            'id': item_id,
-            'title': movie_title,
-            'predicted_rating': round(pred_rating, 2)
+            "type": "Movie",
+            "id": item_id,
+            "title": movie_title,
+            "predicted_rating": round(pred_rating, 2)
         })
 
     for item_id, pred_rating in top_game_recommendations:
         item_id = int(item_id)
-        pred_rating = float(pred_rating)  # Ensure pred_rating is a Python float
+        pred_rating = float(pred_rating)
 
-
-        print(f"item_id: {item_id}, pred_rating: {pred_rating}, type(pred_rating): {type(pred_rating)}")
-
-        # Ensure pred_rating is a single float
-        pred_rating = float(pred_rating) if isinstance(pred_rating, (int, float)) else float(pred_rating[0])
-        game_info = game_df[game_df['app_id'] == item_id]
-        game_title = game_info['title'].iloc[0] if not game_info.empty else f"Unknown Game ({item_id})"
+        game_info = game_df[game_df["app_id"] == item_id]
+        game_title = game_info["title"].iloc[0] if not game_info.empty else f"Unknown Game ({item_id})"
         recommended_items.append({
-            'type': 'Game',
-            'id': item_id,
-            'title': game_title,
-            'predicted_rating': round(pred_rating, 2)
+            "type": "Game",
+            "id": item_id,
+            "title": game_title,
+            "predicted_rating": round(pred_rating, 2)
         })
 
     return recommended_items
-
 
 
 
