@@ -2,7 +2,7 @@ import streamlit as st
 import requests
 
 # FastAPI backend URL
-BACKEND_URL = "http://127.0.0.1:8000"  # Replace with the actual URL of your FastAPI backend
+BACKEND_URL = "http://127.0.0.1:8000"  
 
 def login_page():
     """Login and Sign-Up Interface."""
@@ -55,6 +55,18 @@ def login_page():
                     st.error(f"Connection error: {e}")
             else:
                 st.warning("Please fill in all fields.")
+
+def logout():
+   def logout():
+    """Logout function to reset session state and rerun."""
+    st.session_state["authenticated"] = False
+    st.session_state["username"] = None
+    st.session_state["selected_movie"] = None
+    st.session_state["filtered_movies"] = pd.DataFrame()  # Ensure reset
+    st.session_state["search_query"] = ""
+    
+    st.rerun()  # ✅ Proper rerun for callbacks
+
 
 # Allow standalone execution
 if __name__ == "__main__":
