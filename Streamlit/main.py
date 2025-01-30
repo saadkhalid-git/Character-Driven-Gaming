@@ -1,8 +1,12 @@
 import streamlit as st
 from login_signup import login_page
 from movie_page import movie_search_page
-from Movie_rec import recommendation_page  # Import recommendation page
+from movie_rec import recommendation_page
+from movie_game_recommendation import recommendations
+import sys
+import os
 
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname('__file__'), '..')))
 
 def logout():
     """Logout function to reset session state."""
@@ -12,37 +16,45 @@ def logout():
     st.session_state["search_query"] = ""
     st.experimental_rerun()
 
-# Main entry point
-if __name__ == "__main__":
-    # Initialize session state
-    if "authenticated" not in st.session_state:
-        st.session_state['authenticated'] = False
-        st.session_state['username'] = None
-    if "page" not in st.session_state:
-        st.session_state['page'] = "movie_search"  
 
-    # Route based on authentication
-    if st.session_state['authenticated']:
-        # Navigation options for authenticated users
+# ✅ Main Entry Point
+if __name__ == "__main__":
+    # Initialize session state variables
+    if "authenticated" not in st.session_state:
+        st.session_state["authenticated"] = False
+        st.session_state["username"] = None
+    if "page" not in st.session_state:
+        st.session_state["page"] = "movie_search"  
+
+    # ✅ Navigation for Authenticated Users
+    if st.session_state["authenticated"]:
         with st.sidebar:
-            st.title("Navigation")
+            st.title("📌 Navigation")
             page_selection = st.radio(
                 "Go to:",
-                ["Movie Search", "Movie Recommendations"],  
-                index=0 if st.session_state["page"] == "movie_search" else 1,
+                ["🎬 Movie Search", "🌟 Movie Recommendations", "🎮 Game & Movie Recs"],  # ✅ Added "Game & Movie Recs"
+                index=0 if st.session_state["page"] == "movie_search" else
+                      1 if st.session_state["page"] == "recommendation" else 2,
             )
 
-            # Update the page based on user selection
-            st.session_state["page"] = (
-                "movie_search" if page_selection == "Movie Search" else "recommendation"
-            )
-            st.button("Logout", type="primary", key="logout_button", on_click=logout)
+            # ✅ Map selection to session state
+            if page_selection == "🎬 Movie Search":
+                st.session_state["page"] = "movie_search"
+            elif page_selection == "🌟 Movie Recommendations":
+                st.session_state["page"] = "recommendation"
+            elif page_selection == "🎮 Game & Movie Recs":
+                st.session_state["page"] = "game_movie_recs"
 
+            # ✅ Logout Button
+            st.button("🚪 Logout", key="logout_button", on_click=logout)
 
-        # Display the selected page
+        # ✅ Display the selected page
         if st.session_state["page"] == "movie_search":
             movie_search_page()
         elif st.session_state["page"] == "recommendation":
             recommendation_page()
+        elif st.session_state["page"] == "game_movie_recs":
+            recommendations()
+
     else:
         login_page()

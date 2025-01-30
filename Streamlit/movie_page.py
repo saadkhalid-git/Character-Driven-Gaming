@@ -1,13 +1,13 @@
+from streamlit_autorefresh import st_autorefresh
 import streamlit as st
 import pandas as pd
 import os
+import sys
 import time
-from streamlit_autorefresh import st_autorefresh
 
 
-
-DEFAULT_GAME_IMAGE = '/Users/wasedoo/Documents/EPITA/Semester 3/Action Learning/cross-domain-recommender-movies-and-games/Streamlit/468-4685484_transparent-video-game-clipart-game-console-clipart-hd.png'
-DEFAULT_POSTER_URL = '/Users/wasedoo/Documents/EPITA/Semester 3/Action Learning/cross-domain-recommender-movies-and-games/Streamlit/1f3ac.png'
+DEFAULT_GAME_IMAGE = 'streamlit/trending_posters/game_control.png'
+DEFAULT_POSTER_URL = 'streamlit/trending_posters/1f3ac.png'
 
 # Load movie data
 movies_df = pd.read_csv("../data/processed/processed_movies.csv")
@@ -71,6 +71,7 @@ def initialize_session_state():
 
 initialize_session_state()
 
+
 def get_recommendations(selected_movie):
     """Get up to 5 movie recommendations based on genre similarity."""
     movie = movies_df[movies_df['title'] == selected_movie]
@@ -86,6 +87,7 @@ def get_recommendations(selected_movie):
         similar_movies = similar_movies.sort_values(by="rating", ascending=False)
 
     return similar_movies.head(5)
+
 
 def movie_details(movie_title):
     """Display details of a selected movie and show recommendations."""
@@ -124,6 +126,7 @@ def movie_details(movie_title):
                     if st.button(f"View {rec_movie['title']}", key=f"rec_{rec_movie['title']}"):
                         st.session_state["selected_movie"] = rec_movie['title']
                         st.rerun()
+
 
 def movie_search_page():
     """Movie search and recommendation interface."""
@@ -165,7 +168,9 @@ def movie_search_page():
     else:
         st.warning("⚠️ No movies found! Try another search.")
 
+
 if __name__ == "__main__":
     if st.session_state["authenticated"]:
         movie_search_page()
+
 

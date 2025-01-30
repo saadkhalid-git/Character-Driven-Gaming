@@ -1,22 +1,24 @@
 import streamlit as st
 import requests
 import pandas as pd
-import os
 import time
 from streamlit_autorefresh import st_autorefresh
+import sys
+import os
 
 
+DEFAULT_GAME_IMAGE = 'trending_posters/game_control.png'
+DEFAULT_POSTER_URL = 'trending_posters/player.png'
 
-DEFAULT_GAME_IMAGE = '/Users/wasedoo/Documents/EPITA/Semester 3/Action Learning/cross-domain-recommender-movies-and-games/Streamlit/468-4685484_transparent-video-game-clipart-game-console-clipart-hd.png'
-DEFAULT_POSTER_URL = '/Users/wasedoo/Documents/EPITA/Semester 3/Action Learning/cross-domain-recommender-movies-and-games/Streamlit/1f3ac.png'
+BACKEND_URL = "http://127.0.0.1:8000"
 
-movies_df = pd.read_csv("/Users/wasedoo/Documents/EPITA/Semester 3/Action Learning/cross-domain-recommender-movies-and-games/data/db-data/movies.csv")
+movies_df = pd.read_csv("../data/db-data/movies.csv")
 movies = movies_df['title'].tolist()
 
-games_df = pd.read_csv("/Users/wasedoo/Documents/EPITA/Semester 3/Action Learning/cross-domain-recommender-movies-and-games/data/db-data/games.csv")
+games_df = pd.read_csv("../data/db-data/games.csv")
 games = games_df['title'].tolist()
 
-processed_movies = pd.read_csv("/Users/wasedoo/Documents/EPITA/Semester 3/Action Learning/cross-domain-recommender-movies-and-games/data/processed/processed_movies.csv")
+processed_movies = pd.read_csv("../data/processed/processed_movies.csv")
 
 movies_with_posters = movies_df.merge(processed_movies, on="title", how="left")
 
@@ -25,7 +27,7 @@ movies_with_posters["posters"] = movies_with_posters["posters"].astype(str)
 
 movies_with_posters["posters"] = movies_with_posters["posters"].astype(str)
 
-GAME_POSTERS_FOLDER = "/Users/wasedoo/Documents/EPITA/Semester 3/Action Learning/cross-domain-recommender-movies-and-games/Streamlit/trending posters/"
+GAME_POSTERS_FOLDER = "streamlit/trending_posters"
 
 # Get top trending movies (most watched/rated)
 trending_movies = movies_df.groupby("title")["movieId"].count().sort_values(ascending=False).head(5).index.tolist()
@@ -33,8 +35,6 @@ trending_movies = movies_df.groupby("title")["movieId"].count().sort_values(asce
 # Get top trending games (most played/rated)
 trending_games = games_df.groupby("title")["app_id"].count().sort_values(ascending=False).head(5).index.tolist()
 
-# FastAPI backend URL
-BACKEND_URL = "http://127.0.0.1:8000"  
 
 def get_game_poster_paths():
     """Retrieve all game poster image paths from the local folder."""
@@ -44,6 +44,7 @@ def get_game_poster_paths():
     # print(os.listdir(GAME_POSTERS_FOLDER))
     # Get all image files (JPEG, PNG, etc.)
     return [os.path.join(GAME_POSTERS_FOLDER, f) for f in os.listdir(GAME_POSTERS_FOLDER) if f.endswith((".png", ".jpg", ".jpeg"))]
+
 
 def display_game_slideshow():
     """Displays a continuously running slideshow of trending game posters without blocking UI."""
@@ -134,6 +135,7 @@ def recommendations():
     if st.session_state["recommended_items"]:
         display_recommendations(st.session_state["recommended_items"])
 
+
 def display_recommendations(recommended_items):
     st.success("Here are your recommendations:")
     
@@ -159,13 +161,3 @@ def display_recommendations(recommended_items):
             st.write(f"⭐ {predicted_rating}")
 
 
-
-
-
-# # Allow standalone execution
-# if __name__ == "__main__":
-#     if "authenticated" not in st.session_state:
-#         st.session_state["authenticated"] = True  # Mock authentication for standalone testing
-#         st.session_state["username"] = "TestUser"
-
-#     movie_search_page()
