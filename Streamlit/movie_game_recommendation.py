@@ -27,7 +27,7 @@ movies_with_posters["posters"] = movies_with_posters["posters"].astype(str)
 
 movies_with_posters["posters"] = movies_with_posters["posters"].astype(str)
 
-GAME_POSTERS_FOLDER = "streamlit/trending_posters"
+GAME_POSTERS_FOLDER = "../streamlit/trending_posters"
 
 # Get top trending movies (most watched/rated)
 trending_movies = movies_df.groupby("title")["movieId"].count().sort_values(ascending=False).head(5).index.tolist()
@@ -59,7 +59,7 @@ def display_game_slideshow():
 
     # Select an image based on the refresh count
     image_index = refresh_count % len(game_images)
-    st.image(game_images[image_index], use_column_width=True)
+    st.image(game_images[image_index], use_container_width=True)
 
 
 def recommendations():
@@ -156,7 +156,7 @@ def display_recommendations(recommended_items):
             image_url = DEFAULT_GAME_IMAGE
 
         with cols[idx % 3]:
-            st.image(image_url, use_column_width=True)  # Display image safely
+            st.image(image_url, use_container_width=True)  # Display image safely
             st.markdown(f"**{title}**")
             st.write(f"⭐ {predicted_rating}")
 

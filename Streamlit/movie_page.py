@@ -6,8 +6,8 @@ import sys
 import time
 
 
-DEFAULT_GAME_IMAGE = 'streamlit/trending_posters/game_control.png'
-DEFAULT_POSTER_URL = 'streamlit/trending_posters/1f3ac.png'
+DEFAULT_GAME_IMAGE = '../streamlit/trending_posters/game_control.png'
+DEFAULT_POSTER_URL = '../streamlit/trending_posters/1f3ac.png'
 
 # Load movie data
 movies_df = pd.read_csv("../data/processed/processed_movies.csv")
@@ -103,7 +103,7 @@ def movie_details(movie_title):
     
     col1, col2 = st.columns([1, 2])
     with col1:
-        st.image(movie['posters'], width=250, caption=f"🎬 {movie['title']}", use_column_width=True)
+        st.image(movie['posters'], width=250, caption=f"🎬 {movie['title']}", use_container_width=True)
 
     with col2:
         if 'year' in movie:
@@ -122,7 +122,7 @@ def movie_details(movie_title):
         for idx, (_, rec_movie) in enumerate(recommendations.iterrows()):
             with rec_cols[idx]:  
                 with st.container():
-                    st.image(rec_movie['posters'], width=120, use_column_width=True, caption=rec_movie['title'])
+                    st.image(rec_movie['posters'], width=120, use_container_width=True, caption=rec_movie['title'])
                     if st.button(f"View {rec_movie['title']}", key=f"rec_{rec_movie['title']}"):
                         st.session_state["selected_movie"] = rec_movie['title']
                         st.rerun()
@@ -149,7 +149,7 @@ def movie_search_page():
         for idx, (_, movie) in enumerate(filtered_movies.iterrows()):
             with cols[idx % 3]:
                 with st.container():
-                    st.image(movie['posters'], width=160, use_column_width=True, caption=movie['title'])
+                    st.image(movie['posters'], width=160, use_container_width=True, caption=movie['title'])
                     if st.button(f"View {movie['title']}", key=f"movie_{movie['title']}"):
                         st.session_state["selected_movie"] = movie['title']
                         st.rerun()

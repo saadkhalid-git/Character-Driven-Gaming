@@ -74,5 +74,5 @@ def create_and_populate_another_table():
         print("Error populating 'movies_backup' table:", e)
 
 create_database()
-#create_and_populate_movies_table()
-#create_and_populate_another_table()
+# create_and_populate_movies_table()
+# create_and_populate_another_table()
