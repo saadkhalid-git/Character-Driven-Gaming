@@ -57,10 +57,15 @@ def login_page():
                 st.warning("Please fill in all fields.")
 
 def logout():
-    """Logout function to reset session state."""
+   def logout():
+    """Logout function to reset session state and rerun."""
     st.session_state["authenticated"] = False
     st.session_state["username"] = None
-    st.experimental_rerun()
+    st.session_state["selected_movie"] = None
+    st.session_state["filtered_movies"] = pd.DataFrame()  # Ensure reset
+    st.session_state["search_query"] = ""
+    
+    st.rerun()  # ✅ Proper rerun for callbacks
 
 
 # Allow standalone execution
