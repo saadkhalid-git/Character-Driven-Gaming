@@ -10,7 +10,7 @@ if __name__ == "__main__":
         st.session_state['authenticated'] = False
         st.session_state['username'] = None
     if "page" not in st.session_state:
-        st.session_state['page'] = "movie_search"  # Default to the movie search page after login
+        st.session_state['page'] = "movie_search"  
 
     # Route based on authentication
     if st.session_state['authenticated']:
@@ -19,7 +19,7 @@ if __name__ == "__main__":
             st.title("Navigation")
             page_selection = st.radio(
                 "Go to:",
-                ["Movie Search", "Movie Recommendations"],  # Add options for navigation
+                ["Movie Search", "Movie Recommendations"],  
                 index=0 if st.session_state["page"] == "movie_search" else 1,
             )
 
@@ -34,4 +34,4 @@ if __name__ == "__main__":
         elif st.session_state["page"] == "recommendation":
             recommendation_page()
     else:
-        login_page()  # Load login/signup page
+        login_page()

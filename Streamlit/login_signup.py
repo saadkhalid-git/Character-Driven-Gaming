@@ -2,7 +2,7 @@ import streamlit as st
 import requests
 
 # FastAPI backend URL
-BACKEND_URL = "http://127.0.0.1:8000"  # Replace with the actual URL of your FastAPI backend
+BACKEND_URL = "http://127.0.0.1:8000"  
 
 def login_page():
     """Login and Sign-Up Interface."""
