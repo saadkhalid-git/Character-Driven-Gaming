@@ -4,7 +4,6 @@ from movie_page import movie_search_page
 from Movie_rec import recommendation_page  # Import recommendation page
 
 
-
 def logout():
     """Logout function to reset session state."""
     st.session_state["authenticated"] = False
@@ -12,7 +11,7 @@ def logout():
     st.session_state["selected_movie"] = None
     st.session_state["search_query"] = ""
     st.experimental_rerun()
-    
+
 # Main entry point
 if __name__ == "__main__":
     # Initialize session state

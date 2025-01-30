@@ -1,5 +1,13 @@
 import streamlit as st
 import pandas as pd
+import os
+import time
+from streamlit_autorefresh import st_autorefresh
+
+
+
+DEFAULT_GAME_IMAGE = '/Users/wasedoo/Documents/EPITA/Semester 3/Action Learning/cross-domain-recommender-movies-and-games/Streamlit/468-4685484_transparent-video-game-clipart-game-console-clipart-hd.png'
+DEFAULT_POSTER_URL = '/Users/wasedoo/Documents/EPITA/Semester 3/Action Learning/cross-domain-recommender-movies-and-games/Streamlit/1f3ac.png'
 
 # Load movie data
 movies_df = pd.read_csv("../data/processed/processed_movies.csv")
