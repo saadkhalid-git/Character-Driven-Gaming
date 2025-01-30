@@ -2,18 +2,18 @@ import streamlit as st
 import requests
 
 # FastAPI backend URL
-BACKEND_URL = "http://127.0.0.1:8000"  
+BACKEND_URL = "http://127.0.0.1:8000"
 
 def login_page():
-    """Login and Sign-Up Interface."""
+    """Login and Sign-Up Interface using tabs."""
     st.title("Login Page")
-    menu = ["Login", "Sign Up"]
-    choice = st.radio("Select an option", menu)
-
-    if choice == "Login":
+    
+    tab1, tab2 = st.tabs(["Login", "Sign Up"])
+    
+    with tab1:
         st.subheader("Login to Your Account")
-        username = st.text_input("Username")
-        password = st.text_input("Password", type="password")
+        username = st.text_input("Username", key="login_username")
+        password = st.text_input("Password", type="password", key="login_password")
         if st.button("Login"):
             if username and password:
                 try:
@@ -30,12 +30,12 @@ def login_page():
                     st.error(f"Connection error: {e}")
             else:
                 st.warning("Please enter both username and password.")
-
-    elif choice == "Sign Up":
+    
+    with tab2:
         st.subheader("Create a New Account")
-        new_username = st.text_input("Choose a Username")
-        new_password = st.text_input("Choose a Password", type="password")
-        confirm_password = st.text_input("Confirm Password", type="password")
+        new_username = st.text_input("Choose a Username", key="signup_username")
+        new_password = st.text_input("Choose a Password", type="password", key="signup_password")
+        confirm_password = st.text_input("Confirm Password", type="password", key="signup_confirm_password")
         if st.button("Sign Up"):
             if new_username and new_password and confirm_password:
                 try:
@@ -57,21 +57,19 @@ def login_page():
                 st.warning("Please fill in all fields.")
 
 def logout():
-   def logout():
     """Logout function to reset session state and rerun."""
     st.session_state["authenticated"] = False
     st.session_state["username"] = None
     st.session_state["selected_movie"] = None
-    st.session_state["filtered_movies"] = pd.DataFrame()  # Ensure reset
+    st.session_state["filtered_movies"] = None  # Ensure reset
     st.session_state["search_query"] = ""
     
-    st.rerun()  # ✅ Proper rerun for callbacks
-
+    st.rerun()
 
 # Allow standalone execution
 if __name__ == "__main__":
     if "authenticated" not in st.session_state:
         st.session_state["authenticated"] = False
         st.session_state["username"] = None
-
+    
     login_page()
