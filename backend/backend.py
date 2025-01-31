@@ -44,6 +44,8 @@ app = FastAPI()
 movie_df = pd.read_csv('../data/db-data/movies.csv')
 game_df = pd.read_csv('../data/db-data/games.csv')
 
+games_new = pd.read_csv('../data/games_new.csv')
+
 with open('../models/gnn/movie_map.pkl', 'rb') as f:
     movie_map = pickle.load(f)
 with open('../models/gnn/game_map.pkl', 'rb') as f:
