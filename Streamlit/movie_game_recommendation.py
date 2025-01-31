@@ -77,7 +77,7 @@ def recommendations():
     st.subheader("🔥 Trending Recommendations")
 
     # 🎮 Display the Slideshow for Trending Game Posters
-    display_game_slideshow()
+    # display_game_slideshow()
 
     # 🎯 Movie & Game Selection
     st.subheader("🎯 Choose Your Favorites")
