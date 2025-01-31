@@ -7,8 +7,8 @@ import sys
 import os
 
 
-DEFAULT_GAME_IMAGE = 'trending_posters/game_control.png'
-DEFAULT_POSTER_URL = 'trending_posters/player.png'
+DEFAULT_GAME_IMAGE = 'game_control.png'
+DEFAULT_POSTER_URL = 'player.png'
 
 BACKEND_URL = "http://127.0.0.1:8000"
 
@@ -59,7 +59,7 @@ def display_game_slideshow():
 
     # Select an image based on the refresh count
     image_index = refresh_count % len(game_images)
-    st.image(game_images[image_index], use_container_width=True)
+    st.image(game_images[image_index])
 
 
 def recommendations():
@@ -156,7 +156,7 @@ def display_recommendations(recommended_items):
             image_url = DEFAULT_GAME_IMAGE
 
         with cols[idx % 3]:
-            st.image(image_url, use_container_width=True)  # Display image safely
+            st.image(image_url)  # Display image safely
             st.markdown(f"**{title}**")
             st.write(f"⭐ {predicted_rating}")
 
