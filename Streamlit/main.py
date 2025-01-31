@@ -3,10 +3,13 @@ from login_signup import login_page
 from movie_page import movie_search_page
 from movie_rec import recommendation_page
 from movie_game_recommendation import recommendations
+from chat_bot import chat_bot_page  # Import chatbot page
 import sys
 import os
 
+
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname('__file__'), '..')))
+
 
 def logout():
     """Logout function to reset session state."""
@@ -32,7 +35,7 @@ if __name__ == "__main__":
             st.title("📌 Navigation")
             page_selection = st.radio(
                 "Go to:",
-                ["🎬 Movie Search", "🌟 Movie Recommendations", "🎮 Game & Movie Recs"],  # ✅ Added "Game & Movie Recs"
+                ["🎬 Movie Search", "🌟 Movie Recommendations", "🎮 Game & Movie Recs", 'Chatbot'],  # ✅ Added "Game & Movie Recs"
                 index=0 if st.session_state["page"] == "movie_search" else
                       1 if st.session_state["page"] == "recommendation" else 2,
             )
@@ -44,6 +47,9 @@ if __name__ == "__main__":
                 st.session_state["page"] = "recommendation"
             elif page_selection == "🎮 Game & Movie Recs":
                 st.session_state["page"] = "game_movie_recs"
+            
+            elif page_selection == "Chatbot":
+                st.session_state["page"] = "chat_bot"
 
             # ✅ Logout Button
             st.button("🚪 Logout", key="logout_button", on_click=logout)
@@ -55,6 +61,8 @@ if __name__ == "__main__":
             recommendation_page()
         elif st.session_state["page"] == "game_movie_recs":
             recommendations()
+        elif st.session_state["page"] == "chat_bot":
+            chat_bot_page()
 
     else:
         login_page()
