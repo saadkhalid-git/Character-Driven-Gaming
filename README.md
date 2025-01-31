@@ -34,8 +34,8 @@ Ensure you have the following installed:
 
 1. **Clone the Repository**
    ```sh
-   git clone <repository-url>
-   cd <project-directory>
+   git clone git@github.com:saadkhalid-git/cross-domain-recommender-movies-and-games.git
+   cd cross-domain-recommender-movies-and-games
    ```
 
 2. **Create and Activate Virtual Environment**
