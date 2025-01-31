@@ -17,7 +17,7 @@ def logout():
     st.session_state["username"] = None
     st.session_state["selected_movie"] = None
     st.session_state["search_query"] = ""
-    st.experimental_rerun()
+    st.rerun()
 
 
 # ✅ Main Entry Point

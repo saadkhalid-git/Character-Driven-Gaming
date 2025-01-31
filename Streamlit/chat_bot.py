@@ -21,13 +21,16 @@ def chat_bot_page():
     # Input field for user messages
     if prompt := st.chat_input():
         # Add user message to chat history
-        st.session_state["messages"].append({"role": "user", "content": prompt})
+        st.session_state["messages"].append({
+            "role": "user",
+            "content": f"{prompt}"
+        })
         st.chat_message("user").write(prompt)
 
         # Prepare payload for Ollama
         payload = {
             "model": "llama3.2",
-            "prompt": prompt,
+            "prompt": f"You are an intelligent game recommendation assistant. Your task is to suggest 5 video games that closely match the user's movie-related input, which may be a movie title, description, or any related details.\n\nFor each recommendation, provide:\n1. Game Title\n2. A short description of the game\n3. Reasons for the recommendation based on the given input\n4. A similarity score (0-100%) based on thematic, narrative, and gameplay elements\n\nEnsure recommendations prioritize gameplay mechanics, storyline, setting, and overall experience similar to the movie. If the input is vague, ask clarifying questions before making recommendations. Keep responses structured and concise.\n\nUser Query: {prompt}",
             "stream": False
         }
 
