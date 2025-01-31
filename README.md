@@ -90,6 +90,3 @@ Ensure you have the following installed:
 - Expanding the recommendation system to include more media categories.
 - Adding a UI feature for users to browse recommendations interactively.
 
-## License
-This project is open-source and available under the [MIT License](LICENSE).
-
